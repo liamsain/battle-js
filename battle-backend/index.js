@@ -10,9 +10,7 @@ app.options('*', cors())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const players = [
-
-];
+const players = [];
 
 const wsServer = new ws.Server({ noServer: true });
 
@@ -28,16 +26,11 @@ server.on('upgrade', (request, socket, head) => {
   });
 });
 
-app.get('/', (req, res) => {
-  res.send({"what": 10})
-})
 
-app.get('/players', (req, res) => {});
-
-
-app.post('/test', (req, res) => {
-  res.send({"woah": "it works"});
+app.get('/players', (req, res) => {
+  res.send({ players });
 });
+
 
 app.post('/add-player', (req, res) => {
   func = new Function("return " + req.body.funcText)();
@@ -45,13 +38,16 @@ app.post('/add-player', (req, res) => {
     name: req.body.name,
     execute: func
   };
-  players.push(player);
-  res.send({status: 400});
+  res.send({ status: 400 });
   wsServer.clients.forEach(c => {
-    c.send(JSON.stringify({type: 'New Player', name: player.name}));
+    c.send(JSON.stringify({
+      type: 'New Player',
+      newPlayer: player.name,
+      allPlayers: players.map(x => x.name)
+    }));
   });
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Battle app listening on port ${port}`)
 })
