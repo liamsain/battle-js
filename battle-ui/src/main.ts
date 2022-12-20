@@ -1,5 +1,6 @@
 import './style.css'
 import { codeForm } from './codeForm';
+import { players } from './players';
 const apiUrl = 'http://localhost:5000';
 const exampleSocket = new WebSocket("ws://localhost:3000");
 

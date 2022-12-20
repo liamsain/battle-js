@@ -1,16 +1,14 @@
 const apiUrl = 'http://localhost:5000';
 export function codeForm() {
   let name = '';
+  let funcText = '';
   function submit() {
-    const funcText = document.getElementsByTagName('textarea')[0].value;
-    let func
     try {
-      func = new Function("return " + funcText)();
-      console.log(func());
+      const func = new Function("return " + funcText)();
     } catch(err) {
       alert(err);
     }
-    const name = document.querySelector('#name');
+    const name = document.querySelector<HTMLInputElement>('#name');
     if (!name || !name.value.length) {
       return;
     }
@@ -33,6 +31,7 @@ export function codeForm() {
     el.innerHTML = render();
     document.querySelector('#codeFormSubmit')?.addEventListener('click', () => submit())
     document.querySelector('#name')?.addEventListener('input', (ev) => name = ev.target.value); 
+    document.querySelector('#codeEntry')?.addEventListener('input', ev => funcText = ev.target.value);
   }
   function render() {
     return `
