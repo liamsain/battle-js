@@ -62,7 +62,9 @@ export function useNumberGame() {
     }).json()
   }
   async function startGame() {
-    const { data } = await useFetch(ApiUrl + '/start-game').post();
+    const { data } = await useFetch(ApiUrl + '/start-game').post({
+      rounds: 100
+    }).json();
     if (data.value.status == 200) {
       gameInProgress.value = true;
     }

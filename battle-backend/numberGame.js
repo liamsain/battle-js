@@ -51,14 +51,12 @@ export function startGame(config) {
         p.score += p.guess
       }
     });
-
-
     
     config.wsServer.clients.forEach(c => {
       c.send(JSON.stringify({
         type: EventTypes.RoundComplete,
         data: {
-          players: players.map(({execute, ...rest}) => rest),
+          players: players.map(({execute, ...rest}) => rest).sort((p1, p2) => p2.score - p1.score),
           currentRound
         }
       }));

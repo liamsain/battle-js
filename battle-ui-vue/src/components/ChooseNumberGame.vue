@@ -42,11 +42,11 @@ const {
     </template>
     <template #game>
       <TransitionGroup tag="ul" name="fade" class="container" v-if="roundData">
+        <h4>Round {{ roundData.currentRound}}/100</h4>
         <div v-for="p in roundData.players" class="item" :key="p.name">
-          {{ p.name }}
+          <p>{{ p.name }}&emsp;<strong>Score: </strong>{{ p.score }} <strong>Guess:</strong>{{p.guess}}</p>
         </div>
       </TransitionGroup>
-      {{ roundData }}
     </template>
   </GameTemplate>
 </template>
