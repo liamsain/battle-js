@@ -1,16 +1,10 @@
-// const express = require('express')
-// const cors = require('cors');
-// const ws = require('ws');
-// const bodyParser = require('body-parser');
 import express from 'express';
 import cors from 'cors';
-import ws from 'ws';
 import WebSocket, { WebSocketServer } from 'ws';
 import bodyParser from 'body-parser'
-import { startGame } from './numberGame.js';
+import { startGame, stopGame } from './numberGame.js';
 const app = express()
 const port = 5000
-startGame();
 
 app.use(cors())
 app.options('*', cors())
@@ -39,11 +33,21 @@ app.get('/players', (req, res) => {
 });
 
 app.post('/start-game', (req, res) => {
-  if (!players.length) {
-    res.send({ status: 400, message: 'No players' });
+  if (players.length < 2) {
+    res.send({ status: 400, message: 'Not enough players' });
     return;
   }
   res.send({ status: 200, message: 'Starting...' });
+  startGame({
+    rounds: req.body.rounds,
+    players,
+    wsServer,
+  });
+});
+
+app.post('/stop-game', (req, res) => {
+  stopGame();
+  res.send({ status: 200, message: 'Game stopped' });
 });
 
 

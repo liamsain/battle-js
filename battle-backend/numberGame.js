@@ -2,6 +2,10 @@ export const EventTypes = {
   NewPlayer: 'New Player',
   RoundComplete: 'Round Complete'
 }
+let interval;
+export function stopGame() {
+  clearInterval(interval);
+}
 /**
  * @param {Object} config 
  * @param {number} config.rounds  - the number of rounds in the game
@@ -13,14 +17,57 @@ export const EventTypes = {
 export function startGame(config) {
   let currentRound = 1;
 
-  wsServer.clients.forEach(c => {
-    c.send(JSON.stringify({
-      type: 'New Player',
-      data: {
-        playerNames: players.map(x => x.name)
+  // arg: {round: 1, maxRounds: 100, previousGuesses: [19, 2, 19, 20, 5]}
+  const executeArg = {
+    round: 1,
+    maxRounds: config.rounds,
+    previousGuesses: []
+  };
+  const players = config.players.map(p => ({
+    score: 0,
+    guess: 0,
+    name: p.name,
+    execute: p.execute
+  }));
+
+  interval = setInterval(executeRound, 1000);
+  function executeRound() {
+    let guesses = [];
+    players.forEach(p => {
+      try {
+        const guess = p.execute(executeArg);
+        if (guess > 0 && guess <= 20) {
+          p.guess = guess;
+          guesses.push(guess);
+        }
+      } catch (err) {
+        console.error(`Failed to execute function for ${p.name}. `, err);
       }
-    }));
-  });
+    });
+
+    players.forEach(p => {
+      const guessMatches = guesses.filter(g => g == p.guess);
+      if (guessMatches.length === 1) {
+        p.score += p.guess
+      }
+    });
 
 
+    
+    config.wsServer.clients.forEach(c => {
+      c.send(JSON.stringify({
+        type: EventTypes.RoundComplete,
+        data: {
+          players: players.map(({execute, ...rest}) => rest),
+          currentRound
+        }
+      }));
+    });
+    
+    executeArg.previousGuesses = guesses;
+    currentRound += 1;
+    if (currentRound > config.rounds) {
+      clearInterval(interval);
+    }
+  }
 }

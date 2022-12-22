@@ -4,6 +4,8 @@ const props = defineProps<{
   gameName: string;
   playerName: string;
   playerCode: string;
+  playerNames: string[];
+  disableEntry: boolean;
 }>();
 
 const games = [
@@ -58,12 +60,13 @@ function onSubmit(ev: any) {
     <header>
       <div style="display: flex;justify-content:space-between">
         <h4>{{ gameName }}</h4>
-        <div style="display: flex;">
-          <!-- <h5 style="margin-right: 4px;">Games:</h5>
+        <slot name="header" />
+        <!-- <div style="display: flex;">
+          <h5 style="margin-right: 4px;">Games:</h5>
           <select v-model="selected">
             <option v-for="game in games" :key="game">{{ game }}</option>
-          </select> -->
-        </div>
+          </select>
+        </div> -->
       </div>
     </header>
     <div class="left-sidebar">
@@ -76,6 +79,10 @@ function onSubmit(ev: any) {
     </main>
     <div class="right-sidebar">
       <h4 style="position: sticky; top: 0;">Players</h4>
+      <ul>
+        <li v-for="p in playerNames" :key="p">{{ p }}</li>
+      </ul>
+
       <slot name="players" />
     </div>
     <footer>
@@ -90,7 +97,7 @@ function onSubmit(ev: any) {
               <textarea placeholder="Code" v-model="computedPlayerCode" rows="16" ></textarea>
             </div>
           </fieldset>
-          <input type="submit" @click="onSubmit" id="submit-btn" />
+          <input type="submit" @click="onSubmit" id="submit-btn" :disabled="disableEntry"/>
         </div>
       </form>
     </footer>
