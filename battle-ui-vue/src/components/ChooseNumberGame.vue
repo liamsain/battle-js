@@ -10,7 +10,8 @@ const {
   roundData,
   startGame,
   stopGame,
-  gameInProgress
+  gameInProgress,
+  resetGame,
 } = useNumberGame();
 </script>
 <template>
@@ -25,10 +26,11 @@ const {
     <template #header>
       <div>
         <button @click="startGame" :disabled="playerNames.length < 2">
-          Start game
+          Start
         </button>
-        <button @click="stopGame" :disabled="!gameInProgress">Stop game</button>
-
+        <button @click="stopGame" :disabled="!gameInProgress">Stop</button>
+        <button @click="resetGame" :disabled="gameInProgress">Reset</button>
+        <button @click="createGame" :disabled="gameInProgress">Create </button>
       </div>
     </template>
     <template #instructions>
@@ -38,19 +40,47 @@ const {
           If no other player guessed that number that round, you get that many
           points
         </li>
+        <li>
+          The argument to your function is an object that looks like this:
+          <br /><code
+            >{<br />&nbsp;round: 1,<br />&nbsp;maxRounds: 100,<br />&nbsp;previousGuesses:
+            [<br />&nbsp;&nbsp;19, 2, 19, 20, 5<br />&nbsp;]<br />}</code
+          >
+        </li>
       </ul>
     </template>
     <template #game>
-      <TransitionGroup tag="ul" name="fade" class="container" v-if="roundData">
-        <h4>Round {{ roundData.currentRound}}/100</h4>
-        <div v-for="p in roundData.players" class="item" :key="p.name">
-          <p>{{ p.name }}&emsp;<strong>Score: </strong>{{ p.score }} <strong>Guess:</strong>{{p.guess}}</p>
+      <div class="">
+        <h1 v-if="roundData">Round {{ roundData.currentRound }}/100</h1>
+        <div>
+          <TransitionGroup tag="ul" name="fade" v-if="roundData">
+            <div
+              v-for="p in roundData.players"
+              class="item player"
+              :key="p.name"
+            >
+              <p>
+                <strong>{{ p.name }}:</strong>&emsp;{{ p.score }} {{ p.guess }}
+              </p>
+            </div>
+          </TransitionGroup>
         </div>
-      </TransitionGroup>
+      </div>
     </template>
   </GameTemplate>
 </template>
 <style scoped>
+.number-game-container {
+  display: flex;
+  justify-content: center;
+}
+.player {
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  border-radius: 4px;
+  padding: 8px;
+  max-width: 180px;
+  margin: 8px;
+}
 .fade-move,
 .fade-enter-active,
 .fade-leave-active {

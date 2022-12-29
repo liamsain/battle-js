@@ -1,11 +1,12 @@
-import { ref, onMounted } from 'vue';
-import { useFetch, useWebSocket } from '@vueuse/core';
-import { ApiUrl, ApiIp, WebSocketUrl } from '../api';
+import { ref, onMounted } from "vue";
+import { useFetch, useWebSocket } from "@vueuse/core";
+import { ApiUrl, WebSocketUrl } from "../api";
+import confetti from "canvas-confetti";
 
 export const EventTypes = {
-  NewPlayer: 'New Player',
-  RoundComplete: 'Round Complete'
-}
+  NewPlayer: "New Player",
+  RoundComplete: "Round Complete",
+};
 
 interface IEvent {
   type: string;
@@ -13,9 +14,9 @@ interface IEvent {
 }
 interface IRoundData {
   players: {
-    name: string,
-    score: number,
-    guess: number,
+    name: string;
+    score: number;
+    guess: number;
   }[];
   currentRound: number;
 }
@@ -23,28 +24,31 @@ interface IRoundData {
 export function useNumberGame() {
   const playerNames = ref<string[]>([]);
   const playerCode = ref(`function (arg) {
-  // All of your code should go inside this function
-  // arg: {round: 1, maxRounds: 100, previousGuesses: [19, 2, 19, 20, 5]}
-  return 1;
+  // All code should go inside this function
+  return 20;
 }`);
-  const playerName = ref('');
-  const roundData = ref<IRoundData|null>(null);
+  const playerName = ref("");
+  const roundData = ref<IRoundData | null>(null);
   const gameInProgress = ref(false);
 
-  const { status, data, send, open, close, ws } = useWebSocket(WebSocketUrl)
+  const { status, data, send, open, close, ws } = useWebSocket(WebSocketUrl);
+  console.log(data);
   // @ts-ignore
-  ws.value.onmessage = ev => {
+  ws.value.onmessage = (ev) => {
+    console.log(ev);
     handleEvent(JSON.parse(ev.data));
-  }
-
-  // setTimeout(() => {
-  //   send(JSON.stringify({message: 'hi'}));
-  // }, 1000);
-
+  };
 
   onMounted(async () => {
-    const { isFetching, error, data, execute } = await useFetch(ApiUrl + '/players').json();
+    const { isFetching, error, data, execute } = await useFetch(
+      ApiUrl + "/players"
+    ).json();
     playerNames.value = [...data.value.players];
+    confetti({
+      particleCount: 150,
+      spread: 120,
+      origin: { y: 0.6 },
+    });
   });
 
   function handleEvent(ev: IEvent) {
@@ -55,25 +59,35 @@ export function useNumberGame() {
     }
   }
 
+
   async function onSubmit() {
-    const { data } = await useFetch(ApiUrl + '/add-player').post({
-      name: playerName.value,
-      funcText: playerCode.value
-    }).json()
+    const { data } = await useFetch(ApiUrl + "/add-player")
+      .post({
+        name: playerName.value,
+        funcText: playerCode.value,
+      })
+      .json();
   }
   async function startGame() {
-    const { data } = await useFetch(ApiUrl + '/start-game').post({
-      rounds: 100
-    }).json();
+    const { data } = await useFetch(ApiUrl + "/start-game")
+      .post({
+        rounds: 100,
+      })
+      .json();
     if (data.value.status == 200) {
       gameInProgress.value = true;
     }
   }
   async function stopGame() {
-    const { data } = await useFetch(ApiUrl + '/stop-game').post();
-    if (data.value.status == 200) {
+    const { data } = await useFetch<{ status: number }>(
+      ApiUrl + "/stop-game"
+    ).post();
+    if (data.value?.status == 200) {
       gameInProgress.value = false;
     }
+  }
+  function resetGame() {
+    send(JSON.stringify({ event: "reset" }));
   }
 
   return {
@@ -85,6 +99,7 @@ export function useNumberGame() {
     roundData,
     startGame,
     stopGame,
-    gameInProgress
-  }
+    gameInProgress,
+    resetGame,
+  };
 }

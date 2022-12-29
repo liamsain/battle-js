@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef } from "vue";
+import { Codemirror } from "vue-codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+
 const props = defineProps<{
   gameName: string;
   playerName: string;
@@ -8,38 +11,49 @@ const props = defineProps<{
   disableEntry: boolean;
 }>();
 
-const games = [
-  'Number Game',
-  'Core War',
-  'Public Goods'
-];
-const selected = ref<string>(games[0]);
+const code = ref(`console.log('Hello, world!')`);
+const extensions = [javascript()];
 
+// Codemirror EditorView instance ref
+const view = shallowRef();
+const handleReady = (payload: any) => {
+  view.value = payload.view;
+};
+
+// Status is available at all times via Codemirror EditorView
+const getCodemirrorStates = () => {
+  const state = view.value.state;
+  const lines = state.doc.lines;
+};
+const games = ["Number Game", "Core War", "Public Goods"];
+const selected = ref<string>(games[0]);
 const computedPlayerName = computed({
   get(): string {
-    return props.playerName
+    return props.playerName;
   },
   set(val: string) {
-    emit('update:playerName', val)
-  }
+    emit("update:playerName", val);
+  },
 });
 const computedPlayerCode = computed({
   get(): string {
     return props.playerCode;
   },
   set(val: string) {
-    emit('update:playerCode', val);
-  }
+    emit("update:playerCode", val);
+  },
 });
 
 const emit = defineEmits<{
-  (e: 'submit'): void
-  (e: 'update:playerName', v: string): void;
-  (e: 'update:playerCode', v: string): void;
+  (e: "submit"): void;
+  (e: "update:playerName", v: string): void;
+  (e: "update:playerCode", v: string): void;
 }>();
 
 function onSubmit(ev: any) {
-  if (ev) { ev.preventDefault(); }
+  if (ev) {
+    ev.preventDefault();
+  }
 
   try {
     const func = new Function("return " + props.playerCode)();
@@ -52,13 +66,13 @@ function onSubmit(ev: any) {
     alert("Please supply a name");
     return;
   }
-  emit('submit');
+  emit("submit");
 }
 </script>
 <template>
   <div class="container">
     <header>
-      <div style="display: flex;justify-content:space-between">
+      <div style="display: flex; justify-content: space-between">
         <h4>{{ gameName }}</h4>
         <slot name="header" />
         <!-- <div style="display: flex;">
@@ -74,11 +88,10 @@ function onSubmit(ev: any) {
       <slot name="instructions" />
     </div>
     <main>
-      <h4></h4>
       <slot name="game" />
     </main>
     <div class="right-sidebar">
-      <h4 style="position: sticky; top: 0;">Players</h4>
+      <h4 style="position: sticky; top: 0">Players</h4>
       <ul>
         <li v-for="p in playerNames" :key="p">{{ p }}</li>
       </ul>
@@ -87,17 +100,36 @@ function onSubmit(ev: any) {
     </div>
     <footer>
       <form>
-        <div style="display: flex;align-items: stretch;">
-          <fieldset style="flex-grow: 1;margin-left: 8px;" @submit="onSubmit">
+        <div style="display: flex; align-items: stretch">
+          <fieldset style="flex-grow: 1; margin-left: 8px" @submit="onSubmit">
             <legend>
               <h4>Entry</h4>
             </legend>
             <div>
-              <input placeholder="name" v-model="computedPlayerName" type="text" required />
-              <textarea placeholder="Code" v-model="computedPlayerCode" rows="16" ></textarea>
+              <input
+                placeholder="Name *"
+                v-model="computedPlayerName"
+                type="text"
+                required
+              />
+              <!-- <textarea placeholder="Code" v-model="computedPlayerCode" rows="16" ></textarea> -->
+              <codemirror
+                v-model="computedPlayerCode"
+                placeholder="Code goes here..."
+                :style="{ height: '400px' }"
+                :indent-with-tab="true"
+                :tab-size="2"
+                :extensions="extensions"
+                @ready="handleReady"
+              />
             </div>
           </fieldset>
-          <input type="submit" @click="onSubmit" id="submit-btn" :disabled="disableEntry"/>
+          <input
+            type="submit"
+            @click="onSubmit"
+            id="submit-btn"
+            :disabled="disableEntry"
+          />
         </div>
       </form>
     </footer>
@@ -113,7 +145,7 @@ function onSubmit(ev: any) {
 header {
   background: #66bfbf;
   padding: 4px;
-  border-bottom: 1px solid grey;
+  border-bottom: 1px solid #647d7d;
   grid-column: 1 / 4;
 }
 
@@ -137,6 +169,7 @@ main {
   grid-column: 2 / 3;
   border: 1px solid grey;
   background: #f7fcfc;
+  overflow-y: auto;
   /* padding: 1rem; */
 }
 
