@@ -14,9 +14,10 @@ export function createNumberGame(config) {
   let clients = []; // [{ socket, userId }]
   let players = [];
   let intervalMs = config.interval || 1000;
+  const maxRounds = config.rounds || 100
   let executeArg = {
     round: 1,
-    maxRounds: config.rounds || 100,
+    maxRounds: maxRounds,
     previousGuesses: []
   };
 
@@ -42,18 +43,19 @@ export function createNumberGame(config) {
    * @param {Object} player 
    * @param {string} player.name  - the name of the player
    * @param {string} player.userId  - the name of the player
-   * @param {string} player.execute - text of the function to execute
+   * @param {string} player.funcText - text of the function to execute
   */
   function addPlayer(player) {
 
     const existing = players.find(p => p.name === player.name);
 
-    const func = new Function("return " + player.execute)();
+    const func = new Function("return " + player.funcText)();
     if (existing) {
       existing.execute = func;
       return;
     }
     player.execute = func;
+    player.score = 0;
     players.push(player);
     clients.forEach(c => {
       c.socket.send(JSON.stringify({
@@ -72,7 +74,7 @@ export function createNumberGame(config) {
     pause();
     executeArg = {
       round: 1,
-      maxRounds: config.rounds,
+      maxRounds: config.rounds || 100,
       previousGuesses: []
     };
     clients = [];
@@ -124,7 +126,7 @@ export function createNumberGame(config) {
     executeArg.round += 1;
 
     // End of game check
-    if (executeArg.round > config.rounds) {
+    if (executeArg.round > maxRounds) {
       clearInterval(interval);
     }
   }

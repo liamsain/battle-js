@@ -3,7 +3,7 @@ import { onMounted, ref } from "vue";
 import { useFetch } from "@vueuse/core";
 import { ApiUrl } from "../api";
 import { useRouter } from "vue-router";
-import { setUserId } from '../localData';
+import { setUserId, setUserIsAdmin } from '../localData';
 const router = useRouter();
 const gameNames = ref<string[]>([]);
 const creatingGame = ref(false);
@@ -23,6 +23,8 @@ async function onChange(val) {
 
   const gameRoute = data.value.gameName.split(" ").join("-").toLowerCase();
   setUserId(data.value.userId);
+  // user is admin cause they created the game!
+  setUserIsAdmin();
 
   router.push(`/${gameRoute}/${data.value.gameId}`)
   creatingGame.value = false;
@@ -33,7 +35,7 @@ async function onChange(val) {
     <div>
       <h4>Choose a game</h4>
       <select @change="onChange" :disabled="creatingGame">
-        <option disabled selected value>-- select a game --</option>
+        <option disabled selected value>-- Select a Game --</option>
         <option v-for="n in gameNames" :key="n">{{ n }}</option>
       </select>
     </div>

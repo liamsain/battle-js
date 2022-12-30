@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import GameTemplate from "../components/GameTemplate.vue";
 import { useNumberGame } from "../components/numberGameComposables";
+import { userIsAdmin } from "../localData";
 
 const {
   playerNames,
@@ -24,7 +25,7 @@ const {
     gameName="Number game"
   >
     <template #header>
-      <div>
+      <div v-if="userIsAdmin()">
         <button @click="startGame" :disabled="playerNames.length < 2">
           Start
         </button>
@@ -49,8 +50,11 @@ const {
       </ul>
     </template>
     <template #game>
-      <div class="">
-        <h1 v-if="roundData">Round {{ roundData.currentRound }}/100</h1>
+      <div class="number-game-container">
+        <h2 v-if="roundData">Round {{ roundData.currentRound }}/100</h2>
+        <progress v-if="roundData" :value="roundData.currentRound" max="100">
+          {{ roundData.currentRound }}
+        </progress>
         <div>
           <TransitionGroup tag="ul" name="fade" v-if="roundData">
             <div
@@ -70,8 +74,8 @@ const {
 </template>
 <style scoped>
 .number-game-container {
-  display: flex;
-  justify-content: center;
+  text-align: center;
+  padding: 20px;
 }
 .player {
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;

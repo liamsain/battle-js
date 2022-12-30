@@ -2,11 +2,15 @@ import { ref, onMounted } from "vue";
 import { useFetch, useWebSocket } from "@vueuse/core";
 import { ApiUrl, WebSocketUrl } from "../api";
 import confetti from "canvas-confetti";
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from "vue-router";
+import { getUserId } from "../localData";
 
-export const EventTypes = {
+export const MessageTypesIn = {
   NewPlayer: "New Player",
   RoundComplete: "Round Complete",
+};
+export const MessageTypesOut = {
+  AddClientToGame: "AddClientToGame",
 };
 
 interface IEvent {
@@ -24,12 +28,14 @@ interface IRoundData {
 
 export function useNumberGame() {
   const route = useRoute();
+  const router = useRouter();
+
   const gameId = route.params.gameId;
-  console.log(gameId);
   const playerNames = ref<string[]>([]);
   const playerCode = ref(`function (arg) {
   // All code should go inside this function
-  return 20;
+  // return 20;
+  return Math.floor(Math.random() * 20) + 1;
 }`);
   const playerName = ref("");
   const roundData = ref<IRoundData | null>(null);
@@ -39,15 +45,26 @@ export function useNumberGame() {
   console.log(data);
   // @ts-ignore
   ws.value.onmessage = (ev) => {
-    console.log(ev);
     handleEvent(JSON.parse(ev.data));
   };
 
   onMounted(async () => {
-    // const { isFetching, error, data, execute } = await useFetch(
-    //   ApiUrl + "/players"
-    // ).json();
-    // playerNames.value = [...data.value.players];
+    send(
+      JSON.stringify({
+        type: MessageTypesOut.AddClientToGame,
+        data: { userId: getUserId(), gameId: route.params.gameId },
+      })
+    );
+    const { isFetching, error, data, execute, statusCode } = await useFetch(
+      ApiUrl + "/players/" + route.params.gameId
+    ).json();
+    if (statusCode.value == 404) {
+      // can't find game. time to go home!
+      router.push("/");
+      close();
+      return;
+    }
+    playerNames.value = [...data.value.players];
     confetti({
       particleCount: 150,
       spread: 120,
@@ -56,31 +73,41 @@ export function useNumberGame() {
   });
 
   function handleEvent(ev: IEvent) {
-    if (ev.type == EventTypes.NewPlayer) {
+    console.log(ev.data);
+    if (ev.type == MessageTypesIn.NewPlayer) {
       playerNames.value = ev.data.playerNames;
-    } else if (ev.type == EventTypes.RoundComplete) {
+    } else if (ev.type == MessageTypesIn.RoundComplete) {
       roundData.value = ev.data;
     }
   }
 
-
   async function onSubmit() {
-    const { data } = await useFetch(ApiUrl + "/add-player")
+    const { data, statusCode } = await useFetch(ApiUrl + "/add-player")
       .post({
         name: playerName.value,
+        userId: getUserId(),
         funcText: playerCode.value,
+        gameId: route.params.gameId,
       })
       .json();
+    if (statusCode.value == 404) {
+      router.push("/");
+    }
   }
   async function startGame() {
-    const { data } = await useFetch(ApiUrl + "/start-game")
+    const { data, statusCode } = await useFetch(ApiUrl + "/start-game")
       .post({
-        rounds: 100,
+        userId: getUserId(),
+        gameId: route.params.gameId
       })
       .json();
     if (data.value.status == 200) {
       gameInProgress.value = true;
     }
+    if (statusCode.value == 404) {
+      router.push("/");
+    }
+
   }
   async function stopGame() {
     const { data } = await useFetch<{ status: number }>(

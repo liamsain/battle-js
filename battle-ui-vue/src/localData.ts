@@ -1,6 +1,14 @@
 const key = 'playerData';
-export function setUserId(id) {
+export function setUserId(id: string) {
   localStorage.userId = id;
+}
+
+export function setUserIsAdmin() {
+  localStorage.userIsAdmin = true;
+}
+
+export function userIsAdmin() {
+  return localStorage.userIsAdmin === 'true';
 }
 
 export function getUserId() {

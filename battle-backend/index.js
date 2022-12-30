@@ -8,10 +8,10 @@ import { nanoid } from 'nanoid'
 
 
 const GameNames = {
-  Vickrey: 'Vickrey',
+  // Vickrey: 'Vickrey',
   NumberGame: 'Number Game',
-  PublicGoods: 'Public Goods',
-  CellWars: 'Cell Wars'
+  // PublicGoods: 'Public Goods',
+  // CellWars: 'Cell Wars'
 };
 
 
@@ -59,7 +59,6 @@ wsServer.on('connection', ws => {
       instance.addPlayer(m.data.player); // { data: {gameId, player: {name, userId, execute}}}
     }
   }
-
 });
 
 
@@ -106,49 +105,29 @@ app.get('/players/:gameId', (req, res) => {
     res.status(404).send("Sorry, can't find that game");
     return;
   }
-  res.send({ players: game.getPlayerNames()});
+  res.send({ players: game.instance.getPlayerNames() });
 });
 
-// app.post('/start-game', (req, res) => {
-//   if (players.length < 2) {
-//     res.send({ status: 400, message: 'Not enough players' });
-//     return;
-//   }
-//   res.send({ status: 200, message: 'Starting...' });
-//   startGame({
-//     rounds: req.body.rounds || 100,
-//     players,
-//     wsServer,
-//   });
-// });
-
-// app.post('/stop-game', (req, res) => {
-//   stopGame();
-//   res.send({ status: 200, message: 'Game stopped' });
-// });
 
 
-// app.post('/add-player', (req, res) => {
-//   const func = new Function("return " + req.body.funcText)();
-//   const player = {
-//     name: req.body.name,
-//     execute: func
-//   };
-//   if (players.map(x => x.name).includes(player.name)) {
-//     res.send({ status: 400, message: 'Player already exists' });
-//     return;
-//   }
-//   players.push(player);
-//   res.send({ status: 200 });
-// wsServer.clients.forEach(c => {
-//   c.send(JSON.stringify({
-//     type: 'New Player',
-//     data: {
-//       playerNames: players.map(x => x.name)
-//     }
-//   }));
-// });
-// });
+app.post('/add-player', (req, res) => {
+  const game = games.find(g => g.gameId === req.body.gameId);
+  if (!game) {
+    res.status(404).send("Sorry, can't find that game");
+    return;
+  }
+  game.instance.addPlayer(req.body);
+});
+
+app.post('/start-game', (req, res) => {
+  const game = games.find(g => g.gameId === req.body.gameId);
+  if (!game) {
+    res.status(404).send("Sorry, can't find that game");
+    return;
+  }
+
+  game.instance.start(req.body.userId);
+});
 
 app.listen(port, () => {
   console.log(`Battle app listening on port ${port}`)
