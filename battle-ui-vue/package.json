@@ -15,7 +15,8 @@
     "canvas-confetti": "^1.6.0",
     "codemirror": "^6.0.1",
     "vue": "^3.2.45",
-    "vue-codemirror": "^6.1.1"
+    "vue-codemirror": "^6.1.1",
+    "vue-router": "^4.1.6"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.47.0",

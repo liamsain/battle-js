@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import ChooseNumberGame from './components/ChooseNumberGame.vue';
+// import ChooseNumberGame from './views/ChooseNumberGame.vue';
 </script>
 
 <template>
-  <ChooseNumberGame />
+  <router-view></router-view>
 </template>
 
 <style scoped>

@@ -2,6 +2,7 @@ import { ref, onMounted } from "vue";
 import { useFetch, useWebSocket } from "@vueuse/core";
 import { ApiUrl, WebSocketUrl } from "../api";
 import confetti from "canvas-confetti";
+import { useRoute } from 'vue-router';
 
 export const EventTypes = {
   NewPlayer: "New Player",
@@ -22,6 +23,9 @@ interface IRoundData {
 }
 
 export function useNumberGame() {
+  const route = useRoute();
+  const gameId = route.params.gameId;
+  console.log(gameId);
   const playerNames = ref<string[]>([]);
   const playerCode = ref(`function (arg) {
   // All code should go inside this function
@@ -40,10 +44,10 @@ export function useNumberGame() {
   };
 
   onMounted(async () => {
-    const { isFetching, error, data, execute } = await useFetch(
-      ApiUrl + "/players"
-    ).json();
-    playerNames.value = [...data.value.players];
+    // const { isFetching, error, data, execute } = await useFetch(
+    //   ApiUrl + "/players"
+    // ).json();
+    // playerNames.value = [...data.value.players];
     confetti({
       particleCount: 150,
       spread: 120,

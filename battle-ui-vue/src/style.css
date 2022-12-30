@@ -26,6 +26,10 @@ a:hover {
 body {
   margin: 0;
 }
+html, body {
+
+  height: 100%;
+}
 
 h1 {
   font-size: 3.2em;
@@ -56,4 +60,8 @@ ul {
 }
 fieldset {
   border-radius: 4px;
+}
+
+#app {
+  height: 100%;
 }

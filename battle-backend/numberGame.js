@@ -45,14 +45,24 @@ export function createNumberGame(config) {
    * @param {string} player.execute - text of the function to execute
   */
   function addPlayer(player) {
-    // this might be easier to be an api post as handling errors that way seems easier
-    // e.g. player name, id already exists
-    const existing = players.find(p => p.userId === userId);
+
+    const existing = players.find(p => p.name === player.name);
+
+    const func = new Function("return " + player.execute)();
     if (existing) {
-      // update the execute of that p
-      existing.execute = player.execute;
+      existing.execute = func;
+      return;
     }
+    player.execute = func;
     players.push(player);
+    clients.forEach(c => {
+      c.socket.send(JSON.stringify({
+        type: EventTypes.NewPlayer,
+        data: {
+          playerNames: players.map(x => x.name)
+        }
+      }));
+    });
   }
   function reset(userId) {
     if (userId !== adminId) {
@@ -96,8 +106,8 @@ export function createNumberGame(config) {
     });
 
     // Send results to clients
-    // config.wsServer.clients.forEach(c => {
     clients.forEach(c => {
+      // config.wsServer.clients.forEach(c => {
       const sortedPlayers = players
         .map(({ execute, ...rest }) => rest) // remove execute function from response
         .sort((p1, p2) => p2.score - p1.score);
@@ -115,7 +125,6 @@ export function createNumberGame(config) {
 
     // End of game check
     if (executeArg.round > config.rounds) {
-      // send complete message or is that not needed?
       clearInterval(interval);
     }
   }
@@ -130,13 +139,17 @@ export function createNumberGame(config) {
     clients = clients.filter(c => c.userId !== client.userId);
     clients.push(client);
   }
+  function getPlayerNames() {
+    return players.map(x => x.name);
+  }
 
   return {
     pause,
     addPlayer,
     start,
     reset,
-    addClient
+    addClient,
+    getPlayerNames
   }
 }
 

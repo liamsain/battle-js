@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import GameTemplate from "./GameTemplate.vue";
-import { useNumberGame } from "./numberGameComposables";
+import GameTemplate from "../components/GameTemplate.vue";
+import { useNumberGame } from "../components/numberGameComposables";
 
 const {
   playerNames,
@@ -30,7 +30,6 @@ const {
         </button>
         <button @click="stopGame" :disabled="!gameInProgress">Stop</button>
         <button @click="resetGame" :disabled="gameInProgress">Reset</button>
-        <button @click="createGame" :disabled="gameInProgress">Create </button>
       </div>
     </template>
     <template #instructions>

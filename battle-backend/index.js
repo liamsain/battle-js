@@ -2,15 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import WebSocket, { WebSocketServer } from 'ws';
 import bodyParser from 'body-parser'
-import { startGame, stopGame, createNumberGame } from './numberGame.js';
+import { createNumberGame } from './numberGame.js';
 import { nanoid } from 'nanoid'
 
-const gameNames = [
-  'Vickrey',
-  'Number game',
-  'Public Goods',
-  'Cell wars'
-];
+
+
+const GameNames = {
+  Vickrey: 'Vickrey',
+  NumberGame: 'Number Game',
+  PublicGoods: 'Public Goods',
+  CellWars: 'Cell Wars'
+};
 
 
 const app = express()
@@ -20,7 +22,7 @@ app.options('*', cors())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const games = []; // { gameId: '', adminId: '', instance: gameInstance object}
+const games = []; // { gameId: '', adminId: '', instance: gameInstance }
 
 const wsServer = new WebSocketServer({ noServer: true });
 
@@ -43,11 +45,18 @@ wsServer.on('connection', ws => {
     if (!game) {
       return;
     }
+    const instance = game.instance;
 
     if (m.type === MessageTypes.AddClientToGame) {
-      game.addClient({ socket: ws, userId: m.data.userId });
+      instance.addClient({ socket: ws, userId: m.data.userId });
     } else if (m.type === MessageTypes.StartGame) {
-      game.start(data.userId);
+      instance.start(m.data.userId);
+    } else if (m.type === MessageTypes.ResetGame) {
+      instance.reset(m.data.userId);
+    } else if (m.type === MessageTypes.PauseGame) {
+      instance.pause(m.data.userId);
+    } else if (m.type === MessageTypes.AddPlayer) {
+      instance.addPlayer(m.data.player); // { data: {gameId, player: {name, userId, execute}}}
     }
   }
 
@@ -62,7 +71,11 @@ server.on('upgrade', (request, socket, head) => {
 });
 
 app.get('/game-names', (req, res) => {
-  res.send({ gameNames });
+  let names = [];
+  for (let propName in GameNames) {
+    names.push(GameNames[propName]);
+  }
+  res.send({ names });
 });
 
 app.post('/create-game', (req, res) => {
@@ -73,10 +86,11 @@ app.post('/create-game', (req, res) => {
     gameId,
     adminId,
   };
-  if (req.body.gameName === 'Number Game') {
+  if (req.body.gameName === GameNames.NumberGame) {
     game.instance = createNumberGame({ adminId });
   } else {
     res.status(404).send("Sorry, can't find that game");
+    return;
   }
   games.push(game);
   res.send({
@@ -86,9 +100,14 @@ app.post('/create-game', (req, res) => {
   });
 });
 
-// app.get('/players', (req, res) => {
-//   res.send({ players: players.map(x => x.name) });
-// });
+app.get('/players/:gameId', (req, res) => {
+  const game = games.find(g => g.gameId === req.params.gameId);
+  if (!game) {
+    res.status(404).send("Sorry, can't find that game");
+    return;
+  }
+  res.send({ players: game.getPlayerNames()});
+});
 
 // app.post('/start-game', (req, res) => {
 //   if (players.length < 2) {
@@ -121,14 +140,14 @@ app.post('/create-game', (req, res) => {
 //   }
 //   players.push(player);
 //   res.send({ status: 200 });
-//   wsServer.clients.forEach(c => {
-//     c.send(JSON.stringify({
-//       type: 'New Player',
-//       data: {
-//         playerNames: players.map(x => x.name)
-//       }
-//     }));
-//   });
+// wsServer.clients.forEach(c => {
+//   c.send(JSON.stringify({
+//     type: 'New Player',
+//     data: {
+//       playerNames: players.map(x => x.name)
+//     }
+//   }));
+// });
 // });
 
 app.listen(port, () => {
