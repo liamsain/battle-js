@@ -33,7 +33,7 @@ export function useNumberGame() {
   const gameId = route.params.gameId;
   const playerNames = ref<string[]>([]);
   const playerCode = ref(`function (arg) {
-  // All code should go inside this function
+  // All code must go inside this function
   // return 20;
   return Math.floor(Math.random() * 20) + 1;
 }`);
@@ -52,11 +52,11 @@ export function useNumberGame() {
     send(
       JSON.stringify({
         type: MessageTypesOut.AddClientToGame,
-        data: { userId: getUserId(), gameId: route.params.gameId },
+        data: { userId: getUserId(), gameId },
       })
     );
     const { isFetching, error, data, execute, statusCode } = await useFetch(
-      ApiUrl + "/players/" + route.params.gameId
+      ApiUrl + "/players/" + gameId
     ).json();
     if (statusCode.value == 404) {
       // can't find game. time to go home!
@@ -65,11 +65,6 @@ export function useNumberGame() {
       return;
     }
     playerNames.value = [...data.value.players];
-    confetti({
-      particleCount: 150,
-      spread: 120,
-      origin: { y: 0.6 },
-    });
   });
 
   function handleEvent(ev: IEvent) {
@@ -78,6 +73,13 @@ export function useNumberGame() {
       playerNames.value = ev.data.playerNames;
     } else if (ev.type == MessageTypesIn.RoundComplete) {
       roundData.value = ev.data;
+      if (roundData.value?.currentRound == 100) {
+        confetti({
+          particleCount: 150,
+          spread: 120,
+          origin: { y: 0.6 },
+        });
+      }
     }
   }
 
@@ -87,7 +89,7 @@ export function useNumberGame() {
         name: playerName.value,
         userId: getUserId(),
         funcText: playerCode.value,
-        gameId: route.params.gameId,
+        gameId: gameId,
       })
       .json();
     if (statusCode.value == 404) {
@@ -98,7 +100,7 @@ export function useNumberGame() {
     const { data, statusCode } = await useFetch(ApiUrl + "/start-game")
       .post({
         userId: getUserId(),
-        gameId: route.params.gameId
+        gameId: gameId,
       })
       .json();
     if (data.value.status == 200) {
@@ -107,7 +109,6 @@ export function useNumberGame() {
     if (statusCode.value == 404) {
       router.push("/");
     }
-
   }
   async function stopGame() {
     const { data } = await useFetch<{ status: number }>(
@@ -117,8 +118,30 @@ export function useNumberGame() {
       gameInProgress.value = false;
     }
   }
-  function resetGame() {
-    send(JSON.stringify({ event: "reset" }));
+  async function resetGame() {
+    const { data } = await useFetch<{ status: number }>(
+      ApiUrl + "/reset-game"
+    ).post({
+      userId: getUserId(),
+      gameId: gameId,
+    });
+    gameInProgress.value = false;
+    roundData.value = null;
+    playerNames.value = [];
+  }
+  async function deletePlayer(pName: string) {
+    console.log(pName);
+    const { data, statusCode } = await useFetch<{ status: number }>(
+      ApiUrl + "/remove-player"
+    ).post({
+      userId: getUserId(),
+      gameId: gameId,
+      playerName: pName
+    });
+    if(statusCode.value == 200) {
+      playerNames.value = playerNames.value.filter(p => p !== pName);
+    }
+
   }
 
   return {
@@ -132,5 +155,6 @@ export function useNumberGame() {
     stopGame,
     gameInProgress,
     resetGame,
+    deletePlayer
   };
 }

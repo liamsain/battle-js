@@ -13,7 +13,7 @@ export function createNumberGame(config) {
   let interval;
   let clients = []; // [{ socket, userId }]
   let players = [];
-  let intervalMs = config.interval || 1000;
+  let intervalMs = config.interval || 600;
   const maxRounds = config.rounds || 100
   let executeArg = {
     round: 1,
@@ -23,10 +23,23 @@ export function createNumberGame(config) {
 
   function start(userId) {
     if (userId !== adminId) {
+      console.log('id is not admin id', userId);
       return;
     }
     if (!players.length) {
+      console.log('no players');
       return;
+    }
+    if (executeArg.round >= maxRounds) {
+      executeArg = {
+        round: 1,
+        maxRounds: config.rounds || 100,
+        previousGuesses: []
+      };
+      players.forEach(p => {
+        p.score = 0;
+      });
+
     }
     interval = setInterval(executeRound, intervalMs);
     executeRound();
@@ -71,7 +84,7 @@ export function createNumberGame(config) {
       return;
     }
 
-    pause();
+    pause(userId);
     executeArg = {
       round: 1,
       maxRounds: config.rounds || 100,
@@ -144,6 +157,17 @@ export function createNumberGame(config) {
   function getPlayerNames() {
     return players.map(x => x.name);
   }
+  function removePlayer(userId, playerName) {
+    if (userId !== adminId) {
+      console.log('id is not admin id');
+      return;
+    }
+    const player = players.find(p => p.name === playerName);
+    players = players.filter(p => p.name !== playerName);
+    if (player) {
+      clients = clients.filter(c => c.userId !== player.userId);
+    }
+  }
 
   return {
     pause,
@@ -151,7 +175,8 @@ export function createNumberGame(config) {
     start,
     reset,
     addClient,
-    getPlayerNames
+    getPlayerNames,
+    removePlayer
   }
 }
 

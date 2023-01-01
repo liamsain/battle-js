@@ -2,6 +2,7 @@
 import { computed, ref, shallowRef } from "vue";
 import { Codemirror } from "vue-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
+import { userIsAdmin } from "../localData";
 
 const props = defineProps<{
   gameName: string;
@@ -10,8 +11,14 @@ const props = defineProps<{
   playerNames: string[];
   disableEntry: boolean;
 }>();
+const emit = defineEmits<{
+  (e: "submit"): void;
+  (e: "deletePlayer", playerName: string): void;
+  (e: "update:playerName", v: string): void;
+  (e: "update:playerCode", v: string): void;
+}>();
 
-const code = ref(`console.log('Hello, world!')`);
+
 const extensions = [javascript()];
 
 // Codemirror EditorView instance ref
@@ -25,8 +32,6 @@ const getCodemirrorStates = () => {
   const state = view.value.state;
   const lines = state.doc.lines;
 };
-const games = ["Number Game", "Core War", "Public Goods"];
-const selected = ref<string>(games[0]);
 const computedPlayerName = computed({
   get(): string {
     return props.playerName;
@@ -44,11 +49,6 @@ const computedPlayerCode = computed({
   },
 });
 
-const emit = defineEmits<{
-  (e: "submit"): void;
-  (e: "update:playerName", v: string): void;
-  (e: "update:playerCode", v: string): void;
-}>();
 
 function onSubmit(ev: any) {
   if (ev) {
@@ -73,7 +73,7 @@ function onSubmit(ev: any) {
   <div class="container">
     <header>
       <div style="display: flex; justify-content: space-between">
-        <h4>{{ gameName }}</h4>
+        <h4 style="margin-left: 4px;">{{ gameName }}</h4>
         <slot name="header" />
         <!-- <div style="display: flex;">
           <h5 style="margin-right: 4px;">Games:</h5>
@@ -93,7 +93,10 @@ function onSubmit(ev: any) {
     <div class="right-sidebar">
       <h4 style="position: sticky; top: 0">Players</h4>
       <ul>
-        <li v-for="p in playerNames" :key="p">{{ p }}</li>
+        <li v-for="p in playerNames" :key="p">
+          {{ p }}
+          <button v-if="userIsAdmin()" @click="emit('deletePlayer', p)">X</button>
+        </li>
       </ul>
 
       <slot name="players" />
@@ -112,11 +115,10 @@ function onSubmit(ev: any) {
                 type="text"
                 required
               />
-              <!-- <textarea placeholder="Code" v-model="computedPlayerCode" rows="16" ></textarea> -->
               <codemirror
                 v-model="computedPlayerCode"
                 placeholder="Code goes here..."
-                :style="{ height: '400px' }"
+                :style="{ height: '300px' }"
                 :indent-with-tab="true"
                 :tab-size="2"
                 :extensions="extensions"
@@ -139,7 +141,7 @@ function onSubmit(ev: any) {
 .container {
   display: grid;
   height: 100vh;
-  grid-template: auto minmax(40%, 60%) 1fr / 220px 1fr 220px;
+  grid-template: auto minmax(40%, 70%) 1fr / 220px 1fr 220px;
 }
 
 header {

@@ -13,6 +13,7 @@ const {
   stopGame,
   gameInProgress,
   resetGame,
+  deletePlayer
 } = useNumberGame();
 </script>
 <template>
@@ -22,6 +23,7 @@ const {
     :playerNames="playerNames"
     :disableEntry="gameInProgress"
     @submit="onSubmit"
+    @deletePlayer="deletePlayer"
     gameName="Number game"
   >
     <template #header>
@@ -50,20 +52,33 @@ const {
       </ul>
     </template>
     <template #game>
-      <div class="number-game-container">
-        <h2 v-if="roundData">Round {{ roundData.currentRound }}/100</h2>
-        <progress v-if="roundData" :value="roundData.currentRound" max="100">
-          {{ roundData.currentRound }}
-        </progress>
+      <div class="number-game-container" v-if="roundData">
         <div>
-          <TransitionGroup tag="ul" name="fade" v-if="roundData">
+          <h2>Round {{ roundData.currentRound }}/100</h2>
+          <progress :value="roundData.currentRound" max="100">
+            {{ roundData.currentRound }}
+          </progress>
+        </div>
+        <div>
+          <div class="player">
+            <p><strong>Name</strong></p>
+            <p><strong>Score</strong></p>
+            <p><strong>Guess</strong></p>
+          </div>
+          <TransitionGroup tag="div" name="swap">
             <div
               v-for="p in roundData.players"
               class="item player"
               :key="p.name"
             >
+              <p >
+                {{ p.name }}
+              </p>
               <p>
-                <strong>{{ p.name }}:</strong>&emsp;{{ p.score }} {{ p.guess }}
+                {{ p.score }}
+              </p>
+              <p >
+                {{ p.guess }}
               </p>
             </div>
           </TransitionGroup>
@@ -74,32 +89,35 @@ const {
 </template>
 <style scoped>
 .number-game-container {
-  text-align: center;
-  padding: 20px;
+  display: flex;
+  align-items:center;
+  justify-content:space-around;
 }
 .player {
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   border-radius: 4px;
-  padding: 8px;
-  max-width: 180px;
-  margin: 8px;
+  display: flex;
+  padding: 4px;
+  margin: 4px;
+  justify-content: space-between;
+  min-width: 400px;
 }
-.fade-move,
-.fade-enter-active,
-.fade-leave-active {
+.swap-move,
+.swap-enter-active,
+.swap-leave-active {
   transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
 }
 
 /* 2. declare enter from and leave to state */
-.fade-enter-from,
-.fade-leave-to {
+.swap-enter-from,
+.swap-leave-to {
   opacity: 0;
   transform: scaleY(0.01) translate(30px, 0);
 }
 
 /* 3. ensure leaving items are taken out of layout flow so that moving
       animations can be calculated correctly. */
-.fade-leave-active {
+.swap-leave-active {
   position: absolute;
 }
 </style>

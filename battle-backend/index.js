@@ -49,14 +49,6 @@ wsServer.on('connection', ws => {
 
     if (m.type === MessageTypes.AddClientToGame) {
       instance.addClient({ socket: ws, userId: m.data.userId });
-    } else if (m.type === MessageTypes.StartGame) {
-      instance.start(m.data.userId);
-    } else if (m.type === MessageTypes.ResetGame) {
-      instance.reset(m.data.userId);
-    } else if (m.type === MessageTypes.PauseGame) {
-      instance.pause(m.data.userId);
-    } else if (m.type === MessageTypes.AddPlayer) {
-      instance.addPlayer(m.data.player); // { data: {gameId, player: {name, userId, execute}}}
     }
   }
 });
@@ -127,6 +119,26 @@ app.post('/start-game', (req, res) => {
   }
 
   game.instance.start(req.body.userId);
+});
+app.post('/reset-game', (req, res) => {
+  const game = games.find(g => g.gameId === req.body.gameId);
+  if (!game) {
+    res.status(404).send("Sorry, can't find that game");
+    return;
+  }
+  game.instance.reset(req.body.userId);
+  res.status(200).send('Game reset');
+});
+
+app.post('/remove-player', (req, res) => {
+  const game = games.find(g => g.gameId === req.body.gameId);
+  if (!game) {
+    res.status(404).send("Sorry, can't find that game");
+    return;
+  }
+
+  game.instance.removePlayer(req.body.userId, req.body.playerName);
+  res.status(200).send('Player removed');
 });
 
 app.listen(port, () => {
