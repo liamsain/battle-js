@@ -3,7 +3,8 @@ import cors from "cors";
 import WebSocket, { WebSocketServer } from "ws";
 import bodyParser from "body-parser";
 import { createNumberGame } from "./numberGame";
-import { nanoid } from "nanoid";
+// import * as nanoid from 'nanoid'
+import  { nanoid } from 'nanoid';
 
 interface IGameInstance {
   pause: (userId: string) => void;
@@ -34,9 +35,6 @@ const games: { gameId: string; adminId: string; instance: IGameInstance }[] =
 const wsServer = new WebSocketServer({ noServer: true });
 
 wsServer.on("connection", (ws) => {
-  // assuming ws refers to a single connection
-  // ws.send(JSON.stringify({what: 10}));
-  // ws.send('hi');
   ws.on("message", (message: string) => handleMessage(JSON.parse(message)));
   const MessageTypes = {
     AddClientToGame: "AddClientToGame",
@@ -54,7 +52,6 @@ wsServer.on("connection", (ws) => {
     type: string;
   }
   function handleMessage(m: IMessage) {
-    // expecting { data: {gameId, userId } }
     const game = games.find((x) => x.gameId === m.data.gameId);
     if (!game) {
       return;
@@ -83,20 +80,22 @@ app.get("/game-names", (req, res) => {
 });
 
 app.post("/create-game", (req, res) => {
-  // req.body.gameName
   const adminId = nanoid(12);
   const gameId = nanoid(12);
-  const game = {
-    gameId,
-    adminId,
-  };
+  let instance: null | IGameInstance = null;
   if (req.body.gameName === GameNames.NumberGame) {
-    game.instance = createNumberGame({ adminId });
+    instance = createNumberGame({ adminId });
   } else {
     res.status(404).send("Sorry, can't find that game");
     return;
   }
-  games.push(game);
+  if (instance) {
+    games.push({
+      gameId,
+      adminId,
+      instance
+    });
+  }
   res.send({
     userId: adminId,
     gameId,
@@ -120,6 +119,7 @@ app.post("/add-player", (req, res) => {
     return;
   }
   game.instance.addPlayer(req.body);
+  res.status(200).send('Player added');
 });
 
 app.post("/start-game", (req, res) => {
@@ -130,6 +130,7 @@ app.post("/start-game", (req, res) => {
   }
 
   game.instance.start(req.body.userId);
+  res.status(200).send('Game started');
 });
 app.post("/reset-game", (req, res) => {
   const game = games.find((g) => g.gameId === req.body.gameId);

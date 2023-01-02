@@ -10,7 +10,6 @@ const {
   onSubmit,
   roundData,
   startGame,
-  stopGame,
   gameInProgress,
   resetGame,
   deletePlayer
@@ -31,7 +30,6 @@ const {
         <button @click="startGame" :disabled="playerNames.length < 2">
           Start
         </button>
-        <button @click="stopGame" :disabled="!gameInProgress">Stop</button>
         <button @click="resetGame" :disabled="gameInProgress">Reset</button>
       </div>
     </template>

@@ -1,13 +1,10 @@
+import WebSocket from "ws";
 export const EventTypes = {
   NewPlayer: "New Player",
   RoundComplete: "Round Complete",
 };
 
-export interface IConfig {
-  rounds?: number;
-  interval?: number;
-  adminId: string;
-}
+
 export interface IPlayer {
   score: number;
   name: string;
@@ -23,10 +20,15 @@ interface IExecuteArg {
   maxRounds: number;
   previousGuesses: number[]
 }
+export interface IConfig {
+  rounds?: number;
+  interval?: number;
+  adminId: string;
+}
 export function createNumberGame(config: IConfig) {
   const adminId = config.adminId || "";
   let interval: NodeJS.Timer;
-  let clients: { socket: any; userId: string }[] = []; // [{ socket, userId }]
+  let clients: { socket: WebSocket.WebSocket; userId: string }[] = [];
   let players: IPlayer[] = [];
   let intervalMs = config.interval || 600;
   const maxRounds = config.rounds || 100;
@@ -66,12 +68,6 @@ export function createNumberGame(config: IConfig) {
 
     clearInterval(interval);
   }
-  /**
-   * @param {Object} player
-   * @param {string} player.name  - the name of the player
-   * @param {string} player.userId  - the name of the player
-   * @param {string} player.funcText - text of the function to execute
-   */
   interface IPlayerConfig {
     name: string;
     userId: string;
@@ -116,7 +112,7 @@ export function createNumberGame(config: IConfig) {
       maxRounds: config.rounds || 100,
       previousGuesses: [],
     };
-    clients = [];
+    // clients = [];
     players = [];
   }
 
@@ -170,18 +166,16 @@ export function createNumberGame(config: IConfig) {
       clearInterval(interval);
     }
   }
-  /**
-   * @param {Object} client
-   * @param {Object} client.socket  - the client socket
-   * @param {string} client.userId - the user id of the client
-   */
   interface IClient {
-    socket: any;
+    socket: WebSocket.WebSocket;
     userId: string
   }
   function addClient(client: IClient) {
-    // if client exists, just remove and readd as we might need to refresh the socket obj
-    // not sure if we need this
+    /* 
+      If client exists, just remove and readd 
+      as we might need to refresh the socket obj
+      ...not sure if we need this
+    */ 
     clients = clients.filter((c) => c.userId !== client.userId);
     clients.push(client);
   }
@@ -198,6 +192,17 @@ export function createNumberGame(config: IConfig) {
     if (player) {
       clients = clients.filter((c) => c.userId !== player.userId);
     }
+    clients.forEach((c) => {
+      c.socket.send(
+        JSON.stringify({
+          type: EventTypes.NewPlayer,
+          data: {
+            playerNames: players.map((x) => x.name),
+          },
+        })
+      );
+    });
+
   }
 
   return {
@@ -211,11 +216,3 @@ export function createNumberGame(config: IConfig) {
   };
 }
 
-/**
- * @param {Object} config
- * @param {number} config.rounds  - the number of rounds in the game
- * @param {Object} config.wsServer  - the web socket server to send messages on
- * @param {Object[]} config.players
- * @param {string} config.players[].name - player name
- * @param {string} config.players[].execute - text of function to execute
- */
