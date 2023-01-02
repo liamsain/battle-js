@@ -112,7 +112,6 @@ export function createNumberGame(config: IConfig) {
       maxRounds: config.rounds || 100,
       previousGuesses: [],
     };
-    // clients = [];
     players = [];
   }
 

@@ -139,6 +139,28 @@ export function createPublicGoodsGame(config: IConfig) {
     interval = setInterval(executeRound, intervalMs);
     executeRound();
   }
+  function pause(userId:string) {
+    if (userId !== adminId) {
+      return;
+    }
+
+    clearInterval(interval);
+  }
+
+  function reset(userId: string) {
+    if (userId !== adminId) {
+      return;
+    }
+
+    pause(userId);
+    executeArg = {
+      round: 1,
+      maxRounds: config.rounds || 100,
+      multiplicationFactor: Math.floor(Math.random() * 99) + 1
+    };
+    players = [];
+  }
+
 
 
   function addClient(client: {socket: WebSocket.WebSocket;userId: string}) {
@@ -148,9 +170,39 @@ export function createPublicGoodsGame(config: IConfig) {
     clients.push(client);
   }
 
+  function removePlayer(userId: string, playerName: string) {
+    if (userId !== adminId) {
+      console.log("id is not admin id");
+      return;
+    }
+    const player = players.find((p) => p.name === playerName);
+    players = players.filter((p) => p.name !== playerName);
+    if (player) {
+      clients = clients.filter((c) => c.userId !== player.userId);
+    }
+    clients.forEach((c) => {
+      c.socket.send(
+        JSON.stringify({
+          type: EventTypes.NewPlayer,
+          data: {
+            playerNames: players.map((x) => x.name),
+          },
+        })
+      );
+    });
+
+  }
+  function getPlayerNames() {
+    return players.map((x) => x.name);
+  }
+
+
   return {
     addPlayer,
     addClient,
-    start
+    start,
+    removePlayer,
+    getPlayerNames,
+    reset
   };
 }

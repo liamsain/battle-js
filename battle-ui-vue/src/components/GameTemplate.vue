@@ -173,6 +173,9 @@ main {
   background: #f7fcfc;
   overflow-y: auto;
   /* padding: 1rem; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .right-sidebar {

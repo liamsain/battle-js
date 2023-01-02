@@ -3,11 +3,10 @@ import cors from "cors";
 import WebSocket, { WebSocketServer } from "ws";
 import bodyParser from "body-parser";
 import { createNumberGame } from "./numberGame";
-// import * as nanoid from 'nanoid'
+import { createPublicGoodsGame } from "./publicGoodsGame";
 import  { nanoid } from 'nanoid';
 
 interface IGameInstance {
-  pause: (userId: string) => void;
   addPlayer: (player: any) => void;
   start: (userId: string) => void;
   reset: (userId: string) => void;
@@ -16,7 +15,7 @@ interface IGameInstance {
   removePlayer: (userId: string, playerName: string) => void;
 }
 const GameNames: any = {
-  // Vickrey: 'Vickrey',
+  // VickreyAuction: 'Vickrey Auction',
   NumberGame: "Number Game",
   PublicGoods: "Public Goods",
   // CellWars: 'Cell Wars'
@@ -85,6 +84,8 @@ app.post("/create-game", (req, res) => {
   let instance: null | IGameInstance = null;
   if (req.body.gameName === GameNames.NumberGame) {
     instance = createNumberGame({ adminId });
+  } else if (req.body.gameName === GameNames.PublicGoods) {
+    instance = createPublicGoodsGame({adminId});
   } else {
     res.status(404).send("Sorry, can't find that game");
     return;

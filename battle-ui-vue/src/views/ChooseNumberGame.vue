@@ -51,7 +51,7 @@ const {
     </template>
     <template #game>
       <div class="number-game-container" v-if="roundData">
-        <div>
+        <div style="margin-right: 20px;margin-top: 8px;text-align:center">
           <h2>Round {{ roundData.currentRound }}/100</h2>
           <progress :value="roundData.currentRound" max="100">
             {{ roundData.currentRound }}
@@ -60,8 +60,8 @@ const {
         <div>
           <div class="player">
             <p><strong>Name</strong></p>
-            <p><strong>Score</strong></p>
             <p><strong>Guess</strong></p>
+            <p><strong>Score</strong></p>
           </div>
           <TransitionGroup tag="div" name="swap">
             <div
@@ -72,12 +72,13 @@ const {
               <p >
                 {{ p.name }}
               </p>
-              <p>
-                {{ p.score }}
-              </p>
               <p >
                 {{ p.guess }}
               </p>
+              <p>
+                {{ p.score }}
+              </p>
+
             </div>
           </TransitionGroup>
         </div>
@@ -88,7 +89,7 @@ const {
 <style scoped>
 .number-game-container {
   display: flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:space-around;
 }
 .player {
@@ -100,22 +101,5 @@ const {
   justify-content: space-between;
   min-width: 400px;
 }
-.swap-move,
-.swap-enter-active,
-.swap-leave-active {
-  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
-}
 
-/* 2. declare enter from and leave to state */
-.swap-enter-from,
-.swap-leave-to {
-  opacity: 0;
-  transform: scaleY(0.01) translate(30px, 0);
-}
-
-/* 3. ensure leaving items are taken out of layout flow so that moving
-      animations can be calculated correctly. */
-.swap-leave-active {
-  position: absolute;
-}
 </style>
