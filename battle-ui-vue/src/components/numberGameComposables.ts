@@ -42,7 +42,6 @@ export function useNumberGame() {
   const gameInProgress = ref(false);
 
   const { status, data, send, open, close, ws } = useWebSocket(WebSocketUrl);
-  console.log(data);
   // @ts-ignore
   ws.value.onmessage = (ev) => {
     handleEvent(JSON.parse(ev.data));

@@ -1,51 +1,65 @@
 export const EventTypes = {
-  NewPlayer: 'New Player',
-  RoundComplete: 'Round Complete'
+  NewPlayer: "New Player",
+  RoundComplete: "Round Complete",
+};
+
+export interface IConfig {
+  rounds?: number;
+  interval?: number;
+  adminId: string;
 }
-/**
- * @param {Object} config 
- * @param {number} config.rounds  - the number of rounds in the game. Default 100
- * @param {number} config.interval  - the ms between each round. Default 1000
- * @param {string} config.adminId  - the id of the admin
- */
-export function createNumberGame(config) {
-  const adminId = config.adminId || '';
-  let interval;
-  let clients = []; // [{ socket, userId }]
-  let players = [];
+export interface IPlayer {
+  score: number;
+  name: string;
+  funcText: string;
+  userId: string;
+  execute: (arg: any) => number;
+  guess: number;
+  error?: boolean;
+}
+
+interface IExecuteArg {
+  round: number;
+  maxRounds: number;
+  previousGuesses: number[]
+}
+export function createNumberGame(config: IConfig) {
+  const adminId = config.adminId || "";
+  let interval: NodeJS.Timer;
+  let clients: { socket: any; userId: string }[] = []; // [{ socket, userId }]
+  let players: IPlayer[] = [];
   let intervalMs = config.interval || 600;
-  const maxRounds = config.rounds || 100
-  let executeArg = {
+  const maxRounds = config.rounds || 100;
+  let executeArg: IExecuteArg = {
     round: 1,
     maxRounds: maxRounds,
-    previousGuesses: []
+    previousGuesses: [],
   };
 
-  function start(userId) {
+  function start(userId: string) {
     if (userId !== adminId) {
-      console.log('id is not admin id', userId);
+      console.log("id is not admin id", userId);
       return;
     }
     if (!players.length) {
-      console.log('no players');
+      console.log("no players");
       return;
     }
     if (executeArg.round >= maxRounds) {
       executeArg = {
         round: 1,
         maxRounds: config.rounds || 100,
-        previousGuesses: []
+        previousGuesses: [],
       };
-      players.forEach(p => {
+      players.forEach((p) => {
         p.score = 0;
       });
-
     }
     interval = setInterval(executeRound, intervalMs);
     executeRound();
   }
 
-  function pause(userId) {
+  function pause(userId:string) {
     if (userId !== adminId) {
       return;
     }
@@ -53,33 +67,45 @@ export function createNumberGame(config) {
     clearInterval(interval);
   }
   /**
-   * @param {Object} player 
+   * @param {Object} player
    * @param {string} player.name  - the name of the player
    * @param {string} player.userId  - the name of the player
    * @param {string} player.funcText - text of the function to execute
-  */
-  function addPlayer(player) {
-
-    const existing = players.find(p => p.name === player.name);
+   */
+  interface IPlayerConfig {
+    name: string;
+    userId: string;
+    funcText: string;
+  }
+  function addPlayer(player: IPlayerConfig) {
+    const existing = players.find((p) => p.name === player.name);
 
     const func = new Function("return " + player.funcText)();
     if (existing) {
       existing.execute = func;
       return;
     }
-    player.execute = func;
-    player.score = 0;
-    players.push(player);
-    clients.forEach(c => {
-      c.socket.send(JSON.stringify({
-        type: EventTypes.NewPlayer,
-        data: {
-          playerNames: players.map(x => x.name)
-        }
-      }));
+    const newPlayer: IPlayer = {
+      name: player.name,
+      execute: func,
+      userId: player.userId,
+      score: 0,
+      funcText: player.funcText,
+      guess: 0
+    };
+    players.push(newPlayer);
+    clients.forEach((c) => {
+      c.socket.send(
+        JSON.stringify({
+          type: EventTypes.NewPlayer,
+          data: {
+            playerNames: players.map((x) => x.name),
+          },
+        })
+      );
     });
   }
-  function reset(userId) {
+  function reset(userId: string) {
     if (userId !== adminId) {
       return;
     }
@@ -88,17 +114,17 @@ export function createNumberGame(config) {
     executeArg = {
       round: 1,
       maxRounds: config.rounds || 100,
-      previousGuesses: []
+      previousGuesses: [],
     };
     clients = [];
     players = [];
   }
 
   function executeRound() {
-    let guesses = [];
+    let guesses: number[] = [];
 
     // Execute player functions and add their guesses to the array
-    players.forEach(p => {
+    players.forEach((p) => {
       try {
         const guess = p.execute(executeArg);
         if (guess > 0 && guess <= 20) {
@@ -113,26 +139,27 @@ export function createNumberGame(config) {
     });
 
     // Increment players' scores by guess if their guess was unique
-    players.forEach(p => {
-      const guessMatches = guesses.filter(g => g == p.guess);
+    players.forEach((p) => {
+      const guessMatches = guesses.filter((g) => g == p.guess);
       if (guessMatches.length === 1) {
-        p.score += p.guess
+        p.score += p.guess;
       }
     });
 
     // Send results to clients
-    clients.forEach(c => {
-      // config.wsServer.clients.forEach(c => {
+    clients.forEach((c) => {
       const sortedPlayers = players
         .map(({ execute, ...rest }) => rest) // remove execute function from response
         .sort((p1, p2) => p2.score - p1.score);
-      c.socket.send(JSON.stringify({
-        type: EventTypes.RoundComplete,
-        data: {
-          currentRound: executeArg.round,
-          players: sortedPlayers
-        }
-      }));
+      c.socket.send(
+        JSON.stringify({
+          type: EventTypes.RoundComplete,
+          data: {
+            currentRound: executeArg.round,
+            players: sortedPlayers,
+          },
+        })
+      );
     });
 
     executeArg.previousGuesses = guesses;
@@ -144,28 +171,32 @@ export function createNumberGame(config) {
     }
   }
   /**
-   * @param {Object} client 
+   * @param {Object} client
    * @param {Object} client.socket  - the client socket
    * @param {string} client.userId - the user id of the client
-  */
-  function addClient(client) {
+   */
+  interface IClient {
+    socket: any;
+    userId: string
+  }
+  function addClient(client: IClient) {
     // if client exists, just remove and readd as we might need to refresh the socket obj
     // not sure if we need this
-    clients = clients.filter(c => c.userId !== client.userId);
+    clients = clients.filter((c) => c.userId !== client.userId);
     clients.push(client);
   }
   function getPlayerNames() {
-    return players.map(x => x.name);
+    return players.map((x) => x.name);
   }
-  function removePlayer(userId, playerName) {
+  function removePlayer(userId: string, playerName: string) {
     if (userId !== adminId) {
-      console.log('id is not admin id');
+      console.log("id is not admin id");
       return;
     }
-    const player = players.find(p => p.name === playerName);
-    players = players.filter(p => p.name !== playerName);
+    const player = players.find((p) => p.name === playerName);
+    players = players.filter((p) => p.name !== playerName);
     if (player) {
-      clients = clients.filter(c => c.userId !== player.userId);
+      clients = clients.filter((c) => c.userId !== player.userId);
     }
   }
 
@@ -176,12 +207,12 @@ export function createNumberGame(config) {
     reset,
     addClient,
     getPlayerNames,
-    removePlayer
-  }
+    removePlayer,
+  };
 }
 
 /**
- * @param {Object} config 
+ * @param {Object} config
  * @param {number} config.rounds  - the number of rounds in the game
  * @param {Object} config.wsServer  - the web socket server to send messages on
  * @param {Object[]} config.players
