@@ -8,7 +8,7 @@ export interface IGameConfig {
   onStart: () => void;
 }
 export const EventTypes = {
-  NewPlayer: "New Player", // todo: change this to 'Players Update'
+  PlayersUpdate: "Players Update", // todo: change this to 'Players Update'
   RoundComplete: "Round Complete",
 };
 export interface IPlayerConfig {
@@ -54,7 +54,7 @@ export function useGame<
     const p: PlayerType = config.onAddNewPlayer<PlayerType>(player);
     players.push(p);
     sendMessageToClients({
-      type: EventTypes.NewPlayer,
+      type: EventTypes.PlayersUpdate,
       data: {
         playerNames: players.map((x) => x.name),
       },
@@ -68,7 +68,7 @@ export function useGame<
     }
     players = players.filter((p) => p.name !== playerName);
     sendMessageToClients({
-      type: EventTypes.NewPlayer,
+      type: EventTypes.PlayersUpdate,
       data: {
         playerNames: players.map((x) => x.name),
       },

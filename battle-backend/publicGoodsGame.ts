@@ -1,4 +1,4 @@
-import WebSocket from "ws";
+import { useClients } from "./clients";
 /* 
   users begin with 20 points
   they should provide a function that returns a number between 0 and 100 inclusive
@@ -11,7 +11,7 @@ import WebSocket from "ws";
   every player is rewarded with a fair share of the pot
 */
 export const EventTypes = {
-  NewPlayer: "New Player",
+  PlayersUpdate: "Players Update",
   RoundComplete: "Round Complete",
 };
 export interface IConfig {
@@ -33,9 +33,9 @@ interface IExecuteArg {
   multiplicationFactor: number;
 }
 export function createPublicGoodsGame(config: IConfig) {
+  const { sendMessageToClients, addClient } = useClients();
   const adminId = config.adminId || "";
   let interval: NodeJS.Timer;
-  let clients: { socket: WebSocket.WebSocket; userId: string }[] = []; 
   let players: IPlayer[] = [];
   let intervalMs = config.interval || 1000;
   const maxRounds = config.rounds || 100;
@@ -55,32 +55,31 @@ export function createPublicGoodsGame(config: IConfig) {
         let perc = p.execute(executeArg);
         if (perc >= 0 && perc <= 100) {
           p.percentage = perc;
-          pot += Math.floor((perc / 100) * p.points);
+          const toAdd = Math.floor((perc / 100) * p.points);
+          pot += toAdd;
+          p.points -= toAdd;
         }
       } catch (err) {
         console.log(`Failed to execute func for ${p.name}.`, err);
       }
     });
-
+    console.log(`pot before: ${pot}`);
     pot = Math.floor(pot * (1 + executeArg.multiplicationFactor / 100));
+    console.log(`pot after: ${pot}`);
     const playerReward = Math.floor(pot / players.length);
     players.forEach((p) => {
       p.points += playerReward;
     });
+    const sortedPlayers = players
+      .map(({ execute, ...rest }) => rest) // remove execute function from response
+      .sort((p1, p2) => p2.points - p1.points);
 
-    clients.forEach((c) => {
-      const sortedPlayers = players
-        .map(({ execute, ...rest }) => rest) // remove execute function from response
-        .sort((p1, p2) => p2.points - p1.points);
-      c.socket.send(
-        JSON.stringify({
-          type: EventTypes.RoundComplete,
-          data: {
-            currentRound: executeArg.round,
-            players: sortedPlayers,
-          },
-        })
-      );
+    sendMessageToClients({
+      type: EventTypes.RoundComplete,
+      data: {
+        currentRound: executeArg.round,
+        players: sortedPlayers,
+      },
     });
     executeArg.round += 1;
     // End of game check
@@ -88,7 +87,11 @@ export function createPublicGoodsGame(config: IConfig) {
       clearInterval(interval);
     }
   }
-  function addPlayer(player: {name: string;userId: string;funcText: string}) {
+  function addPlayer(player: {
+    name: string;
+    userId: string;
+    funcText: string;
+  }) {
     const existing = players.find((p) => p.name === player.name);
 
     const func = new Function("return " + player.funcText)();
@@ -102,18 +105,14 @@ export function createPublicGoodsGame(config: IConfig) {
       percentage: 0,
       name: player.name,
       userId: player.userId,
-      funcText: player.funcText
-    }
+      funcText: player.funcText,
+    };
     players.push(newPlayer);
-    clients.forEach((c) => {
-      c.socket.send(
-        JSON.stringify({
-          type: EventTypes.NewPlayer,
-          data: {
-            playerNames: players.map((x) => x.name),
-          },
-        })
-      );
+    sendMessageToClients({
+      type: EventTypes.PlayersUpdate,
+      data: {
+        playerNames: players.map((x) => x.name),
+      },
     });
   }
   function start(userId: string) {
@@ -130,7 +129,7 @@ export function createPublicGoodsGame(config: IConfig) {
       executeArg = {
         round: 1,
         maxRounds: config.rounds || 100,
-        multiplicationFactor: Math.floor(Math.random() * 99) + 1
+        multiplicationFactor: Math.floor(Math.random() * 99) + 1,
       };
       players.forEach((p) => {
         p.points = 0;
@@ -139,7 +138,7 @@ export function createPublicGoodsGame(config: IConfig) {
     interval = setInterval(executeRound, intervalMs);
     executeRound();
   }
-  function pause(userId:string) {
+  function pause(userId: string) {
     if (userId !== adminId) {
       return;
     }
@@ -156,18 +155,9 @@ export function createPublicGoodsGame(config: IConfig) {
     executeArg = {
       round: 1,
       maxRounds: config.rounds || 100,
-      multiplicationFactor: Math.floor(Math.random() * 99) + 1
+      multiplicationFactor: Math.floor(Math.random() * 99) + 1,
     };
     players = [];
-  }
-
-
-
-  function addClient(client: {socket: WebSocket.WebSocket;userId: string}) {
-    // if client exists, just remove and readd as we might need to refresh the socket obj
-    // not sure if we need this!
-    clients = clients.filter((c) => c.userId !== client.userId);
-    clients.push(client);
   }
 
   function removePlayer(userId: string, playerName: string) {
@@ -175,27 +165,17 @@ export function createPublicGoodsGame(config: IConfig) {
       console.log("id is not admin id");
       return;
     }
-    const player = players.find((p) => p.name === playerName);
     players = players.filter((p) => p.name !== playerName);
-    if (player) {
-      clients = clients.filter((c) => c.userId !== player.userId);
-    }
-    clients.forEach((c) => {
-      c.socket.send(
-        JSON.stringify({
-          type: EventTypes.NewPlayer,
-          data: {
-            playerNames: players.map((x) => x.name),
-          },
-        })
-      );
+    sendMessageToClients({
+      type: EventTypes.PlayersUpdate,
+      data: {
+        playerNames: players.map((x) => x.name),
+      },
     });
-
   }
   function getPlayerNames() {
     return players.map((x) => x.name);
   }
-
 
   return {
     addPlayer,
@@ -203,6 +183,6 @@ export function createPublicGoodsGame(config: IConfig) {
     start,
     removePlayer,
     getPlayerNames,
-    reset
+    reset,
   };
 }

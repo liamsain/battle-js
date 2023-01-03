@@ -5,7 +5,7 @@ import { getUserId } from "../localData";
 import { useRoute, useRouter } from 'vue-router';
 
 export const MessageTypesIn = {
-  NewPlayer: "New Player",
+  PlayersUpdate: "Players Update",
   RoundComplete: "Round Complete",
 };
 export const MessageTypesOut = {
@@ -57,9 +57,8 @@ export function useGame(config: IUseGameConfig) {
   });
   function handleEvent(ev: IEvent) {
     console.log(ev);
-    if (ev.type == MessageTypesIn.NewPlayer) {
+    if (ev.type == MessageTypesIn.PlayersUpdate) {
       playerNames.value = ev.data.playerNames;
-      console.log('hi');
     }
     if (config.onMessage) {
       config.onMessage(ev);

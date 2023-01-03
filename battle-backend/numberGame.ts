@@ -1,8 +1,7 @@
-// import { useGame, IGameConfig, IPlayerConfig, IRoundData } from "./game";
 import { useClients } from "./clients";
 
 export const EventTypes = {
-  NewPlayer: "New Player",
+  PlayersUpdate: "Players Update",
   RoundComplete: "Round Complete",
 };
 
@@ -91,7 +90,7 @@ export function createNumberGame(config: IConfig) {
     };
     players.push(newPlayer);
     sendMessageToClients({
-      type: EventTypes.NewPlayer,
+      type: EventTypes.PlayersUpdate,
       data: {
         playerNames: players.map((x) => x.name),
       },
@@ -167,7 +166,7 @@ export function createNumberGame(config: IConfig) {
     }
     players = players.filter((p) => p.name !== playerName);
     sendMessageToClients({
-      type: EventTypes.NewPlayer,
+      type: EventTypes.PlayersUpdate,
       data: {
         playerNames: players.map((x) => x.name),
       },

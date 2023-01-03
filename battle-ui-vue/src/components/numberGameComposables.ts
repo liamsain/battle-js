@@ -3,7 +3,7 @@ import confetti from "canvas-confetti";
 import { useGame } from "../composables/gameComposables";
 
 export const MessageTypesIn = {
-  NewPlayer: "New Player",
+  PlayersUpdate: "Players Update",
   RoundComplete: "Round Complete",
 };
 export const MessageTypesOut = {

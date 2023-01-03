@@ -59,9 +59,9 @@ const {
         </div>
         <div>
           <div class="player">
-            <p><strong>Name</strong></p>
-            <p><strong>Guess</strong></p>
-            <p><strong>Score</strong></p>
+            <p style="width: 8ch"><strong>Name</strong></p>
+            <p><strong>Last Guess</strong></p>
+            <p style="width: 5ch;"><strong>Score</strong></p>
           </div>
           <TransitionGroup tag="div" name="swap">
             <div
@@ -69,13 +69,13 @@ const {
               class="item player"
               :key="p.name"
             >
-              <p >
+              <p style="width: 8ch">
                 {{ p.name }}
               </p>
               <p >
                 {{ p.guess }}
               </p>
-              <p>
+              <p style="width: 5ch;">
                 {{ p.score }}
               </p>
 

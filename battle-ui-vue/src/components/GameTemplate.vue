@@ -113,6 +113,7 @@ function onSubmit(ev: any) {
                 placeholder="Name *"
                 v-model="computedPlayerName"
                 type="text"
+                maxlength="8"
                 required
               />
               <codemirror
