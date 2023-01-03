@@ -26,7 +26,7 @@ const {
     gameName="Number game"
   >
     <template #header>
-      <div v-if="userIsAdmin()">
+      <div v-if="userIsAdmin()">  
         <button @click="startGame" :disabled="playerNames.length < 2">
           Start
         </button>
