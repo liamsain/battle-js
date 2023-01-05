@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import confetti from "canvas-confetti";
 import { useGame } from "../composables/gameComposables";
-
+import { IEvent } from '../types/types';
 export const MessageTypesIn = {
   PlayersUpdate: "Players Update",
   RoundComplete: "Round Complete",
@@ -10,10 +10,6 @@ export const MessageTypesOut = {
   AddClientToGame: "AddClientToGame",
 };
 
-interface IEvent {
-  type: string;
-  data: any;
-}
 interface IRoundData {
   players: {
     name: string;

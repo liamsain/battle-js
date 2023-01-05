@@ -22,7 +22,7 @@ const GameNames: any = {
 };
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 4000;
 app.use(cors());
 app.options("*", cors());
 app.use(bodyParser.urlencoded({ extended: false }));
