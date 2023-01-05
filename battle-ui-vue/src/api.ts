@@ -3,5 +3,7 @@ export const ApiIp = '192.168.1.64'
 export const ApiPort = '4000';
 export const WebSocketPort = '3000';
 
-export const ApiUrl = `http://${ApiIp}:${ApiPort}`;
-export const WebSocketUrl = `ws://${ApiIp}:${WebSocketPort}`
+// export const ApiUrl = `http://${ApiIp}:${ApiPort}`;
+// export const WebSocketUrl = `ws://${ApiIp}:${WebSocketPort}`
+export const ApiUrl = `https://139-162-204-88.ip.linodeusercontent.com:${ApiPort}`;
+export const WebSocketUrl = `ws://139-162-204-88.ip.linodeusercontent.com:${WebSocketPort}`
