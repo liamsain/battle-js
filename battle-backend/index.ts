@@ -23,7 +23,9 @@ const GameNames: any = {
 
 const app = express();
 const port = process.env.PORT || 4000;
-app.use(cors());
+app.use(cors({
+  origin: 'https://battle-js.vercel.app'
+}));
 app.options("*", cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
